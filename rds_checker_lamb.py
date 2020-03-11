@@ -82,14 +82,13 @@ def lambda_handler(event, context):
                             else:
                                 stop_pass = False
                                 print (stop_pass)
-
                     try:
-                        if state_pass == True and start_pass == True:
+                        if state_pass == True and start_pass == True and stop_pass == True:
                             print ('**STOPPING**')
-                            stop_resp = rds_cli.start_db_instance(
+                            stop_resp = rds_cli.stop_db_instance(
                                 DBInstanceIdentifier=key
                             )
-                        elif state_pass == False or start_pass == False:
+                        elif state_pass == False or start_pass == False or stop_pass == False:
                             print ('*DOING NOTHING*')
                     except:
                         print ('Something went wrong ...')
