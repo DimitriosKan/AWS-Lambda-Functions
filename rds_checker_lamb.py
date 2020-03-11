@@ -10,21 +10,21 @@ def lambda_handler(event, context):
     # eg. ... = 'db-one', 'db-two'
     set_list = 'database-1', 'database-2'
     available_rds = {}
-
+    
     # run the check for the lambda env variables
     lamb_response = lamb_cli.get_function_configuration(
         FunctionName='test_func'
     )
     DBFunction = lamb_response['Environment']['Variables']['DBClusterFunction']
     print (f'RDS service requested for DB CLuster START/STOP: {DBFunction}')
-
-
+    
+    
     # check the status of the env function (DBFunction) is equal to ...
     if DBFunction == 'STOP':
         # get the name: arn key: val pair of available RDS DBs
         for i in rds_response['DBInstances']:
             available_rds[i['DBInstanceIdentifier']] = i['DBInstanceArn']
-
+    
         # fetch the key of all avaialble instances
         for key in available_rds:
             # check if the key matches the set_list
@@ -37,21 +37,21 @@ def lambda_handler(event, context):
                 tag_response = rds_cli.list_tags_for_resource(
                     ResourceName = rds_arn,
                 )
-
+    
                 # get current time
                 current_time = datetime.now()
-
+    
                 # convert string to datetime
                 def time_eval(key_val):
                     tag_time = datetime.strptime(key_val, '%Y-%m-%d %H:%M:%S')
                     return tag_time
-
+    
                 try:
                     # * check through all the tags in dictionary *
                     # print the dictionary (key_val) which will be used later
                     for key_val in tag_response['TagList']:
                         print (key_val)
-
+    
                         # Do the checks on those Keys:
                         # check if the service is up (or equivalent)
                         # [*Edit this acording to your tag's value*]
@@ -62,41 +62,45 @@ def lambda_handler(event, context):
                             else:
                                 state_pass = False
                                 print (state_pass)
-
+    
                         if key_val['Key'] == 'Started':
                             if time_eval(key_val['Value']) < current_time:
-                                print (f"Tag date:{time_eval(key_val['Value'])} - Current date:{current_time}")
+                                print (f"Tag date:{time_eval(key_val['Value'])} < Current date:{current_time}")
                                 # print (f"Tag date:{time_eval(key_val['Value'])}{type(time_eval(key_val['Value']))} - Current date:{current_time}{type(current_time)}")
                                 start_pass = True
                                 print ('Value is a: pass')
                             else:
                                 start_pass = False
                                 print (start_pass)
-
+    
                         if key_val['Key'] == 'Stopped':
                             if time_eval(key_val['Value']) > current_time:
-                                print (f"Tag date:{time_eval(key_val['Value'])} - Current date:{current_time}")
+                                print (f"Tag date:{time_eval(key_val['Value'])} > Current date:{current_time}")
                                 # print (f"Tag date:{time_eval(key_val['Value'])}{type(time_eval(key_val['Value']))} - Current date:{current_time}{type(current_time)}")
                                 stop_pass = True
                                 print ('Value is a: pass')
                             else:
                                 stop_pass = False
                                 print (stop_pass)
+
                     try:
-                        if state_pass == True and start_pass == True and stop_pass == True:
-                            print ('**STOPPING**')
-                            stop_resp = rds_cli.stop_db_instance(
-                                DBInstanceIdentifier=key
-                            )
-                        elif state_pass == False or start_pass == False or stop_pass == False:
+                        if state_pass == True:
+                            if start_pass == False or stop_pass == False:
+                                print ('**STOPPING**')
+                                stop_resp = rds_cli.stop_db_instance(
+                                    DBInstanceIdentifier=key
+                                )
+                            elif start_pass == True and stop_pass == True:
+                                print ('*DOING NOTHING*')
+                        elif state_pass == False:
                             print ('*DOING NOTHING*')
                     except:
                         print ('Something went wrong ...')
-
+    
                 # this triggers when the instance has been stopped and you run that again
                 except:
                     print ('The dictionary is non existent')
-
+    
     # check the status of the env function (DBFunction) is equal to ...
     elif DBFunction == 'START':
         print ('Starting ...')
