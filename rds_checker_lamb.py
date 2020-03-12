@@ -15,12 +15,12 @@ def lambda_handler(event, context):
     DBFunction = lamb_response['Environment']['Variables']['DBClusterFunction']
     print (f'RDS service requested for DB CLuster START/STOP: {DBFunction}')
 
+    # get the name: arn key: val pair of available RDS DBs
+    for i in rds_response['DBInstances']:
+        available_rds[i['DBInstanceIdentifier']] = i['DBInstanceArn']
+
     # check the status of the env function (DBFunction) is equal to ...
     if DBFunction == 'STOP':
-        # get the name: arn key: val pair of available RDS DBs
-        for i in rds_response['DBInstances']:
-            available_rds[i['DBInstanceIdentifier']] = i['DBInstanceArn']
-
         # fetch the key of all avaialble instances
         for key in available_rds:
             print ()
@@ -95,13 +95,13 @@ def lambda_handler(event, context):
                             print ('State set to Down !')
                         # check if the user is allwoed to have the rds up
                         elif start_pass == True and stop_pass == True:
-                            print ('*DOING NOTHING* because current date is in range')
+                            print ('*DOING NOTHING*: Current date is in range')
                     # if it's already Down, tell the user and do nothing else
                     elif state_pass == False:
-                        print ('*DOING NOTHING* because State is Down')
+                        print ('*DOING NOTHING*: State is Down')
                     # if something goes wrong on value level error here
                     elif state_pass == None:
-                        print ('*DOING NOTHING* because State is None')
+                        print ('*DOING NOTHING*: State is None')
                 # if something goes wrong on key: value level error here
                 except:
                     print ('Something went wrong ...')
