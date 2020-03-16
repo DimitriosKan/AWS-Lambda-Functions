@@ -61,15 +61,15 @@ def time_parse(key_val):
 def done_block(set_time):
     update_state = None
     # if current time is higher or equal to the new time (static set from the start of the udpate) plus update time (2 hrs)
-    if datetime.timedelta(seconds=910) + time_parse(set_time) >= time_parse(current_time()):
+    if datetime.timedelta(seconds=70) + time_parse(set_time) >= time_parse(current_time()):
         update_state = True
-        print (datetime.timedelta(seconds=910) + time_parse(set_time))
+        print (datetime.timedelta(seconds=70) + time_parse(set_time))
         print (f'[c]{current_time()} <= [s]{set_time} ?')
         print (f'Update Done [{update_state}]')
         return update_state
-    elif datetime.timedelta(seconds=910) + time_parse(set_time) <= time_parse(current_time()):
+    elif datetime.timedelta(seconds=70) + time_parse(set_time) <= time_parse(current_time()):
         update_state = False
-        print (datetime.timedelta(seconds=910) + time_parse(set_time))
+        print (datetime.timedelta(seconds=70) + time_parse(set_time))
         print (f'[c]{current_time()} >= [s]{set_time} ?')
         print (f'Update not allowed ... [{update_state}]')
         return update_state
@@ -110,36 +110,36 @@ for key in available_rds:
             if state_pass == False:
                 print ('STARTING ...')
                 # V Start instance V
-                stop_resp = rds_cli.start_db_instance(
+                rds_cli.start_db_instance(
                     DBInstanceIdentifier=key
                 )
                 print (f'{key} was started !')
 
                 # V Check if instance is available yet V
-                for key in available_rds:
-                    print ('Checking state:')
-                    while True:
-                        value = check_if_up(key)
-                        if value != 'available':
-                            print (f'{key}: {value}')
-                            time.sleep(35)
-                        elif value == 'available':
-                            print ('Instance ({key}) is up')
-                            break
-                        else:
-                            print ('Failed ...')
-                            break
-
-                # V Change tag to Up V
-                rds_cli.add_tags_to_resource(
-                    ResourceName=rds_arn,
-                    Tags=[
-                        {
-                            'Key': 'State',
-                            'Value': 'Up'
-                        }
-                    ]
-                )
+                # not sure if i need the below line
+                #for key in available_rds:
+                print (f'Checking state ({key}):')
+                while True:
+                    value = check_if_up(key)
+                    if value != 'available':
+                        print (f'{key}: {value}')
+                        time.sleep(35)
+                    elif value == 'available':
+                        # V Change tag to Up V
+                        rds_cli.add_tags_to_resource(
+                            ResourceName=rds_arn,
+                            Tags=[
+                                {
+                                    'Key': 'State',
+                                    'Value': 'Up'
+                                }
+                            ]
+                        )
+                        print (f'Instance ({key}) is Up')
+                        break
+                    else:
+                        print ('Failed ...')
+                        break
 
                 # V Block time for update (2hrs) V
                 # if curret date tag is < than start date tag - 2 hrs (test it by getting current time, adding 2 hours to it, print, equate to two hours in the 
@@ -148,16 +148,16 @@ for key in available_rds:
                 set_time = current_time()
                 # set the start tag with set time
 
-                time.sleep(900)
+                time.sleep(60)
 
-                print ('15 minutes later ... ')
+                print ('1 minutes later ... ')
 
                 # check the update state (aka if the update has passed)
                 update_state = done_block(set_time)
                 if update_state == True:
                     # V Stop instance V
-                    print ('Stopping ...')
-                    stop_resp = rds_cli.stop_db_instance(
+                    print (f'Stopping {key} ...')
+                    rds_cli.stop_db_instance(
                         DBInstanceIdentifier=key
                     )
                     print (f'{key} was stopped !')
