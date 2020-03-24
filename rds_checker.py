@@ -48,7 +48,6 @@ for key in available_rds:
             if key_val['Key'] == 'Started':
                 if time_eval(key_val['Value']) < current_time:
                     print (f"Tag date:{time_eval(key_val['Value'])} < Current date:{current_time}")
-                    # print (f"Tag date:{time_eval(key_val['Value'])}{type(time_eval(key_val['Value']))} - Current date:{current_time}{type(current_time)}")
                     start_pass = True
                 else:
                     start_pass = False
@@ -57,7 +56,6 @@ for key in available_rds:
             if key_val['Key'] == 'Stopped':
                 if time_eval(key_val['Value']) > current_time:
                     print (f"Tag date:{time_eval(key_val['Value'])} > Current date:{current_time}")
-                    # print (f"Tag date:{time_eval(key_val['Value'])}{type(time_eval(key_val['Value']))} - Current date:{current_time}{type(current_time)}")
                     stop_pass = True
                 else:
                     stop_pass = False

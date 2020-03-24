@@ -24,26 +24,6 @@ def check_if_up(key):
     for i in single_rds_response['DBInstances']:
         return i['DBInstanceStatus']
 
-'''
-# check the state of instance - 0.1
-def check_state(key):
-    single_rds_response = rds_cli.describe_db_instances(
-        DBInstanceIdentifier=key
-    )
-    print ('Check state:')
-    for i in single_rds_response['DBInstances']:
-        while True:
-            if i['DBInstanceStatus'] != 'available':
-                print (f"{i['DBInstanceIdentifier']} - {i['DBInstanceStatus']}")
-
-            elif i['DBInstanceStatus'] == 'available':
-                print ('Instance is up')
-                print ('Continuing onwards ...')
-                # return i['DBInstanceStatus']
-                break
-            time.sleep(45)
-'''
-
 # get current date in desired format (needs to be formatted with the parser)
 def current_time():
     current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -132,7 +112,7 @@ for key in available_rds:
                                 Tags=[
                                     {
                                         'Key': 'State',
-                                        'Value': 'Up'
+                                        'Value': 'Update'
                                     }
                                 ]
                             )
