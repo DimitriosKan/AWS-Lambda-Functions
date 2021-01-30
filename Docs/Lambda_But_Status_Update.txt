@@ -1,0 +1,80 @@
+https://github.com/DimitriosKan/AWS-Lambda-Functions/tree/dev-main
+
+situation:
+two lambda functions
+one to spin up instances for weekly/monthly update
+one to take down instances with tag Patch
+ - And to take down instnace with tag Up
+
+One event trigger for the first funtion (set to trigger spin up function an hour or so before update window)
+Two event triggers for second function:
+ - take down instances with tag Patch (minutes after the update window was complete)
+ - take down instances with tag Up (set to check every morning)
+
+Tags required:
+Started: day the instance has been started for a user (Lower thresh hold to check with current date/time)
+Stopped: day after which the instance is allowed to be stopped (Upper thresh hold to check with current date/time)
+State (3 options):
+  - Up : Used for the morning check (If instance is up run morning checks)
+  - Down : Used by the spin up function (If instance is down run spin up checks) (!Should be set when instance is Down!)
+  - Patch : Used by the take down function (If instance is Patch run take down checks)
+
+Checks:
+  - If instance is Up : Check if current date is between Started and Stopped - If it is, do nothing
+			Check if current date is outside Started or Stopped - If it is, Stop it
+  - If instance is Down : Check if update window start value is higher - If it is, Start it
+			  Else, just fail (chances are it won't because we set an Event)
+  - If instance is Patch : Check if update window top value is lower than current time - If it is, Stop it
+			   Other Checks ...
+
+Case scenario:
+
+for both: 
+funcion documentation
+integrate cloudwatch logs
+
+for monthly_update:
+rds maintenance window and lambda
+
+Issues:
+on the bringing up of instance - I can't check if it is actually available in the same bringing up instance
+Solution ?:
+trigger the lambda function after the first one is complete (might need multiple events or something)
+
+issues:
+I can't make it stop a day after.
+solution:
+I can stop it the same day though, say update runs from 1 am to 5 am,
+I can very consistently check if the day is the same and if the time of the day is beyond the patch window
+
+issue:
+in regards to bringing up an instance and how I couldn't check the availability status (if needed)
+in regards to wether the update window has been completed
+solution:
+schedule a lambda function every 5 minutes or so ? (somehow)
+It will check the status and populate an sns event
+
+issue:
+I'm not sure how starting up the update would be. Not quite sure if it's automatic or you have to change properties. Aka trigger it somehow. So far I'm guessing it's auto
+
+issue - FIXT:
+So far it spins up all instances ad tags them with Patch, which is so it's isolated to only the patch function in the takedown script. However if an instance is not in the same-day patch window is it worth updating it to Patch or even spinning it up ? Might be better to drop it and result in an Error
+
+
+schedule an event an hour or so before the rds patch window
+check if state is down
+if is bring it up
+
+* problem is not knowing when the instance is up BUT have code to check with
+~~~~~~
+schedule and event for two hours later or so (more like three to allow for the startup time as well)
+~~~~~~
+
+check if state is up
+if current time is in the tagged window
+if is keep it
+if not take it down
+simultaneously check if the state is patch
+if is check if the time is in patch window
+if is keep it
+if not take it down
